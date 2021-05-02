@@ -13,8 +13,8 @@
 'use strict';
 
 mw.messages.set( {
-	'vbr-noPermissionAutoconfirmed': 'Como Reversor você não tem permissão para bloquear esse usuário, pois ele é um autoconfirmado.',
-	'vbr-noPermissionHimself': 'Como Reversor você não tem permissão para bloquear a si mesmo.'
+	'vbr-noPermissionAutoconfirmed': 'Como reversor você não tem permissão para bloquear esse usuário, pois ele é um autoconfirmado.',
+	'vbr-noPermissionHimself': 'Como reversor você não tem permissão para bloquear a si mesmo.'
 } );
 
 var $target, queue;
