@@ -4,7 +4,7 @@
  * @author [[w:pt:User:!Silent]]
  * @date 15/apr/2012
  */
-/* global mw */
+/* global mw, $ */
 
 ( function () {
 'use strict';
