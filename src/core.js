@@ -4,7 +4,7 @@
  * @desc Prevents that rollbackers in ptwikipedia blocks autoconfirmed users and of exceed the block limit (1 day).
  * @author [[w:pt:User:!Silent]]
  * @date 15/apr/2012
- * @updated 22/mar/2020
+ * @updated 02/jul/2021
  */
 /* jshint laxbreak: true */
 /* global mw, $ */
@@ -70,13 +70,13 @@ function validateBlockRollbackers() {
 		}
 	} );
 
-	$( '#ooui-5 div' ).each( function() {
+	$( '#ooui-7 div' ).each( function() {
 		if ( $( this ).text().search( /((segundo|minuto|hora)s?|1 dia)/ ) === -1 ) {
 			$( this ).remove();
 		}
 	} );
 
-	$( '#ooui-1 .oo-ui-optionWidget' ).each( function() {
+	$( '#ooui-2 div' ).each( function() {
 		if ( $( this ).text().search( /(vandalismo|Propaganda ou \[\[WP:SPAM|spam\]\])/i ) === -1
 			|| $( this ).text().indexOf( 'IP com longo histórico' ) !== -1
 		) {
