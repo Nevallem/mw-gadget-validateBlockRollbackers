@@ -4,7 +4,7 @@
  * @desc Prevents that rollbackers in ptwikipedia blocks autoconfirmed users and of exceed the block limit (1 day).
  * @author [[w:pt:User:!Silent]]
  * @date 15/apr/2012
- * @updated 02/jul/2021
+ * @updated 04/jul/2021
  */
 /* jshint laxbreak: true */
 /* global mw, $ */
@@ -27,11 +27,10 @@ function isAutoconfirmed() {
 	var apiDeferred = $.Deferred();
 
 	// Prevents more than one request
-	if ( !queue ) {
+	if ( !queue )
 		queue = 1;
-	} else {
+	else
 		return apiDeferred.promise();
-	}
 
 	$.getJSON( mw.util.wikiScript( 'api' ), {
 		action: 'query',
@@ -55,6 +54,26 @@ function isAutoconfirmed() {
 }
 
 /**
+ * Erase prohibited options to rollbackers
+ * @param {string} wpExpiryTarget
+ * @param {string} wpReasonTarget
+ * @return {undefined}
+ */
+function eraseProhibitedOptions( wpExpiryTarget, wpReasonTarget ) {
+	$( wpExpiryTarget ).each( function() {
+		if ( $( this ).text().search( /((segundo|minuto|hora)s?|1 dia)/ ) === -1 )
+			$( this ).remove();
+	} );
+
+	$( wpReasonTarget ).each( function() {
+		if ( $( this ).text().search( /(vandalismo|Propaganda ou \[\[WP:SPAM|spam\]\])/i ) === -1
+			|| $( this ).text().indexOf( 'IP com longo histórico' ) !== -1
+		)
+			$( this ).remove();
+	} );
+}
+
+/**
  * Executes
  * @return {undefined}
  */
@@ -65,24 +84,14 @@ function validateBlockRollbackers() {
 	}
 
 	isAutoconfirmed().done( function ( confirmed ) {
-		if ( confirmed ) {
+		if ( confirmed )
 			$( '#mw-content-text' ).html( mw.message( 'vbr-noPermissionAutoconfirmed' ).plain() );
-		}
 	} );
 
-	$( '#ooui-7 div' ).each( function() {
-		if ( $( this ).text().search( /((segundo|minuto|hora)s?|1 dia)/ ) === -1 ) {
-			$( this ).remove();
-		}
-	} );
-
-	$( '#ooui-2 div' ).each( function() {
-		if ( $( this ).text().search( /(vandalismo|Propaganda ou \[\[WP:SPAM|spam\]\])/i ) === -1
-			|| $( this ).text().indexOf( 'IP com longo histórico' ) !== -1
-		) {
-			$( this ).remove();
-		}
-	} );
+	if ( location.hostname !== 'pt.m.wikipedia.org' )
+		eraseProhibitedOptions( '#ooui-7 div', '#ooui-2 div' );
+	else
+		eraseProhibitedOptions( 'select[name="wpExpiry"] option', 'select[name="wpReason"] option' );
 
 	$target.blur( function () {
 		isAutoconfirmed().done( function ( confirmed ) {
@@ -93,10 +102,15 @@ function validateBlockRollbackers() {
 		} );
 	} );
 
-	$( '#mw-input-wpExpiry .oo-ui-indicatorElement-indicator' ).remove();
-	$( '#mw-input-wpExpiry .oo-ui-buttonElement-framed' ).eq( 1 ).remove();
-	$( '#ooui-7' ).next().remove();
-	$( '#ooui-8' ).remove();
+	$( '#ooui-8' ).next().remove();
+	$( '#ooui-php-14' ).remove();
+	$( '#ooui-php-15' ).remove();
+	$( '#ooui-php-16' ).remove();
+	$( '#ooui-php-17' ).remove();
+	$( '#ooui-php-18' ).remove();
+	$( '#mw-input-wpEditingRestriction label[role="radio"]' ).eq( 1 ).remove();
+	$( 'input[name="wpExpiry-other"]').next().next().remove();
+	$( 'input[name="wpExpiry-other"]').remove();
 }
 
 $( function() {
