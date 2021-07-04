@@ -88,10 +88,12 @@ function validateBlockRollbackers() {
 			$( '#mw-content-text' ).html( mw.message( 'vbr-noPermissionAutoconfirmed' ).plain() );
 	} );
 
-	if ( location.hostname !== 'pt.m.wikipedia.org' )
-		eraseProhibitedOptions( '#ooui-7 div', '#ooui-2 div' );
-	else
-		eraseProhibitedOptions( 'select[name="wpExpiry"] option', 'select[name="wpReason"] option' );
+	eraseProhibitedOptions.apply(
+		undefined,
+		location.hostname !== 'pt.m.wikipedia.org'
+			? [ '#ooui-7 div', '#ooui-2 div' ]
+			: [ 'select[name="wpExpiry"] option', 'select[name="wpReason"] option' ]
+	);
 
 	$target.blur( function () {
 		isAutoconfirmed().done( function ( confirmed ) {
@@ -108,9 +110,10 @@ function validateBlockRollbackers() {
 	$( '#ooui-php-16' ).remove();
 	$( '#ooui-php-17' ).remove();
 	$( '#ooui-php-18' ).remove();
-	$( '#mw-input-wpEditingRestriction label[role="radio"]' ).eq( 1 ).remove();
 	$( 'input[name="wpExpiry-other"]').next().next().remove();
 	$( 'input[name="wpExpiry-other"]').remove();
+	$( 'optgroup[label="Motivos predefinidos"]').remove();
+	$( '#mw-input-wpEditingRestriction label[role="radio"]' ).eq( 1 ).remove();
 }
 
 $( function() {
