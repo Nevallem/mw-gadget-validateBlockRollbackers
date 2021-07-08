@@ -4,7 +4,7 @@
  * @desc Prevents that rollbackers in ptwikipedia blocks autoconfirmed users and of exceed the block limit (1 day).
  * @author [[w:pt:User:!Silent]]
  * @date 15/apr/2012
- * @updated 05/jul/2021
+ * @updated 07/jul/2021
  */
 /* jshint laxbreak: true, esversion: 8 */
 /* global mw, $, URLSearchParams */
