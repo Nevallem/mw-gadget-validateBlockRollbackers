@@ -6,8 +6,8 @@
  * @date 15/apr/2012
  * @updated 05/jul/2021
  */
-/* jshint laxbreak: true */
-/* global mw, $ */
+/* jshint laxbreak: true, esversion: 8 */
+/* global mw, $, URLSearchParams */
 
 ( function () {
 'use strict';
@@ -17,22 +17,16 @@ mw.messages.set( {
 	'vbr-noPermissionHimself': 'Como reversor você não tem permissão para bloquear a si mesmo.'
 } );
 
-var $target, queue;
+let $target;
 
 /**
  * Verify if the user is an autoconfirmed
  * @return {jQuery.Deferred}
  */
-function isAutoconfirmed() {
-	var apiDeferred = $.Deferred();
+async function isAutoconfirmed() {
+	let requestResponse, requestData;
 
-	// Prevents more than one request
-	if ( !queue )
-		queue = 1;
-	else
-		return apiDeferred.promise();
-
-	$.getJSON( mw.util.wikiScript( 'api' ), {
+	requestResponse = await fetch( mw.util.wikiScript( 'api' ) + '?' + new URLSearchParams( {
 		action: 'query',
 		list: 'allusers',
 		format: 'json',
@@ -40,17 +34,13 @@ function isAutoconfirmed() {
 		aulimit: '1',
 		aufrom: $target.val(),
 		auto: $target.val()
-	}, function ( data ) {
-		apiDeferred.resolve(
-			$.isEmptyObject( data.query.allusers )
-				? false
-				: ( $.inArray( 'autoconfirmed', data.query.allusers[ 0 ].implicitgroups ) !== -1 )
-		);
+	} ) );
 
-		queue = 0;
-	} );
+	requestData = await requestResponse.json();
 
-	return apiDeferred.promise();
+	return $.isEmptyObject( requestData.query.allusers )
+		? false
+		: ( $.inArray( 'autoconfirmed', requestData.query.allusers[ 0 ].implicitgroups ) !== -1 );
 }
 
 /**
@@ -71,38 +61,6 @@ function eraseProhibitedOptions( wpExpiryTarget, wpReasonTarget ) {
 		)
 			$( this ).remove();
 	} );
-}
-
-/**
- * Executes
- * @return {undefined}
- */
-function validateBlockRollbackers() {
-	if ( $target.val() === mw.config.get( 'wgUserName' ) ) {
-		$( '#mw-content-text' ).html( mw.message( 'vbr-noPermissionHimself' ).plain() );
-		return;
-	}
-
-	isAutoconfirmed().done( function ( confirmed ) {
-		if ( confirmed )
-			$( '#mw-content-text' ).html( mw.message( 'vbr-noPermissionAutoconfirmed' ).plain() );
-	} );
-
-	eraseProhibitedOptions.apply(
-		undefined,
-		location.hostname !== 'pt.m.wikipedia.org'
-			? [ '#ooui-7 div', '#ooui-2 div' ]
-			: [ 'select[name="wpExpiry"] option', 'select[name="wpReason"] option' ]
-	);
-
-	$target.blur( function () {
-		isAutoconfirmed().done( function ( confirmed ) {
-			if ( confirmed ) {
-				alert( mw.message( 'vbr-noPermission' + ( $target.val() === mw.config.get( 'wgUserName' ) ? 'Himself' : 'Autoconfirmed' ) ).plain() );
-				$target.val( '' ).focus();
-			}
-		} );
-	} );
 
 	$( '#ooui-8' ).next().remove();
 	$( '#ooui-php-14' ).remove();
@@ -113,6 +71,35 @@ function validateBlockRollbackers() {
 	$( 'input[name="wpExpiry-other"]').remove();
 	$( 'optgroup[label="Motivos predefinidos"]').remove();
 	$( '#mw-input-wpEditingRestriction label[role="radio"]' ).eq( 1 ).remove();
+}
+
+/**
+ * Executes
+ * @return {undefined}
+ */
+async function validateBlockRollbackers() {
+	if ( $target.val() === mw.config.get( 'wgUserName' ) ) {
+		$( '#mw-content-text' ).html( mw.message( 'vbr-noPermissionHimself' ).plain() );
+		return;
+	}
+
+	if ( await isAutoconfirmed() ) {
+		$( '#mw-content-text' ).html( mw.message( 'vbr-noPermissionAutoconfirmed' ).plain() );
+	}
+
+	eraseProhibitedOptions.apply(
+		undefined,
+		location.hostname !== 'pt.m.wikipedia.org'
+			? [ '#ooui-7 div', '#ooui-2 div' ]
+			: [ 'select[name="wpExpiry"] option', 'select[name="wpReason"] option' ]
+	);
+
+	$target.blur( async () => {
+		if ( await isAutoconfirmed() ) {
+			alert( mw.message( 'vbr-noPermission' + ( $target.val() === mw.config.get( 'wgUserName' ) ? 'Himself' : 'Autoconfirmed' ) ).plain() );
+			$target.val( '' ).focus();
+		}
+	} );
 }
 
 $( function() {
