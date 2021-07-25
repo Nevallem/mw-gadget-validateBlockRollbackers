@@ -4,7 +4,7 @@
  * @desc Prevents that rollbackers in ptwikipedia blocks autoconfirmed users and of exceed the block limit (1 day).
  * @author [[w:pt:User:!Silent]]
  * @date 15/apr/2012
- * @updated 07/jul/2021
+ * @updated 25/jul/2021
  */
 /* jshint laxbreak: true, esversion: 8 */
 /* global mw, $, URLSearchParams */
@@ -23,7 +23,7 @@ let $target;
  * Verify if the user is an autoconfirmed
  * @return {jQuery.Deferred}
  */
-async function isAutoconfirmed() {
+async function vbr_isAutoconfirmed() {
 	let requestResponse, requestData;
 
 	requestResponse = await fetch( mw.util.wikiScript( 'api' ) + '?' + new URLSearchParams( {
@@ -49,7 +49,7 @@ async function isAutoconfirmed() {
  * @param {string} wpReasonTarget
  * @return {undefined}
  */
-function eraseProhibitedOptions( wpExpiryTarget, wpReasonTarget ) {
+function vbr_eraseProhibitedOptions( wpExpiryTarget, wpReasonTarget ) {
 	$( wpExpiryTarget ).each( function() {
 		if ( $( this ).text().search( /((segundo|minuto|hora)s?|1 dia)/ ) === -1 )
 			$( this ).remove();
@@ -77,17 +77,17 @@ function eraseProhibitedOptions( wpExpiryTarget, wpReasonTarget ) {
  * Executes
  * @return {undefined}
  */
-async function validateBlockRollbackers() {
+async function vbr_run() {
 	if ( $target.val() === mw.config.get( 'wgUserName' ) ) {
 		$( '#mw-content-text' ).html( mw.message( 'vbr-noPermissionHimself' ).plain() );
 		return;
 	}
 
-	if ( await isAutoconfirmed() ) {
+	if ( await vbr_isAutoconfirmed() ) {
 		$( '#mw-content-text' ).html( mw.message( 'vbr-noPermissionAutoconfirmed' ).plain() );
 	}
 
-	eraseProhibitedOptions.apply(
+	vbr_eraseProhibitedOptions.apply(
 		undefined,
 		location.hostname !== 'pt.m.wikipedia.org'
 			? [ '#ooui-7 div', '#ooui-2 div' ]
@@ -95,7 +95,7 @@ async function validateBlockRollbackers() {
 	);
 
 	$target.blur( async () => {
-		if ( await isAutoconfirmed() ) {
+		if ( await vbr_isAutoconfirmed() ) {
 			alert( mw.message( 'vbr-noPermission' + ( $target.val() === mw.config.get( 'wgUserName' ) ? 'Himself' : 'Autoconfirmed' ) ).plain() );
 			$target.val( '' ).focus();
 		}
@@ -104,7 +104,7 @@ async function validateBlockRollbackers() {
 
 $( function() {
 	$target = $( 'input[name="wpTarget"]' );
-	validateBlockRollbackers();
+	vbr_run();
 } );
 
 }() );
