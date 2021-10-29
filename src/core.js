@@ -4,7 +4,7 @@
  * @desc Prevents that rollbackers in ptwikipedia blocks autoconfirmed users and of exceed the block limit (1 day).
  * @author [[w:pt:User:!Silent]]
  * @date 15/apr/2012
- * @updated 25/jul/2021
+ * @updated 29/oct/2021
  */
 /* jshint laxbreak: true, esversion: 8 */
 /* global mw, $, URLSearchParams */
@@ -64,8 +64,6 @@ function vbr_eraseProhibitedOptions( wpExpiryTarget, wpReasonTarget ) {
 
 	$( '#ooui-8' ).next().remove();
 	$( '#ooui-php-14' ).remove();
-	$( '#ooui-php-15' ).remove();
-	$( '#ooui-php-16' ).remove();
 	$( '#ooui-php-17' ).remove();
 	$( 'input[name="wpExpiry-other"]').next().next().remove();
 	$( 'input[name="wpExpiry-other"]').remove();
