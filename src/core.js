@@ -68,6 +68,15 @@ function vbr_eraseProhibitedOptions( wpExpiryTarget, wpReasonTarget ) {
 	$( 'input[name="wpExpiry-other"]').remove();
 	$( 'optgroup[label="Motivos predefinidos"]').remove();
 	$( '#mw-input-wpEditingRestriction label[role="radio"]' ).eq( 1 ).remove();
+	mw.util.addCSS( '
+		.oo-ui-defaultOverlay > div > div:nth-child(n + 7),
+		.mw-widget-ExpiryWidget.mw-widget-ExpiryWidget-hasDatePicker .oo-ui-buttonSelectWidget,
+		.mw-htmlform-ooui .oo-ui-fieldLayout.mw-htmlform-checkradio-indent,
+		.oo-ui-textInputWidget #mw-input-wpReason,
+		.oo-ui-defaultOverlay > div > div:first-child {
+			display: none !important;
+		}
+	');
 }
 
 /**
