@@ -4,7 +4,7 @@
  * @desc Prevents that rollbackers in ptwikipedia blocks autoconfirmed users and of exceed the block limit (1 day).
  * @author [[w:pt:User:!Silent]]
  * @date 15/apr/2012
- * @updated 30/oct/2021
+ * @updated 18/sep/2022
  */
 /* jshint laxbreak: true, esversion: 8 */
 /* global mw, $, URLSearchParams */
@@ -50,24 +50,35 @@ async function vbr_isAutoconfirmed() {
  * @return {undefined}
  */
 function vbr_eraseProhibitedOptions( wpExpiryTarget, wpReasonTarget ) {
-	$( wpExpiryTarget ).each( function() {
-		if ( $( this ).text().search( /((segundo|minuto|hora)s?|1 dia)/ ) === -1 )
-			$( this ).remove();
-	} );
 
-	$( wpReasonTarget ).each( function() {
-		if ( $( this ).text().search( /(vandalismo|Propaganda ou \[\[WP:SPAM|spam\]\])/i ) === -1
-			|| $( this ).text().indexOf( 'IP com longo histórico' ) !== -1
-		)
-			$( this ).remove();
-	} );
+	if ( !wpReasonTarget ) {
+		$( wpExpiryTarget ).each( function() {
+			if ( $( this ).text().search( /((segundo|minuto|hora)s?|1 dia)/ ) === -1
+				&& $( this ).text().search( /(vandalismo|Propaganda ou \[\[WP:SPAM|spam\]\]|Motivos de bloqueio comuns)/i ) === -1
+				|| $( this ).text().indexOf( 'IP com longo histórico' ) !== -1
+			)
+				$( this ).remove();
+		} );
+	} else {
+		$( wpExpiryTarget ).each( function() {
+			if ( $( this ).text().search( /((segundo|minuto|hora)s?|1 dia)/ ) === -1 )
+				$( this ).remove();
+		} );
 
-	$( '#ooui-8' ).next().remove();
-	$( '#ooui-php-17' ).remove();
+		$( wpReasonTarget ).each( function() {
+			if ( $( this ).text().search( /(vandalismo|Propaganda ou \[\[WP:SPAM|spam\]\]|Motivos de bloqueio comuns)/i ) === -1
+				|| $( this ).text().indexOf( 'IP com longo histórico' ) !== -1
+			)
+				$( this ).remove();
+		} );
+	}
+
+	$( '#mw-input-wpEditingRestriction label[role="radio"]' ).eq( 1 ).remove();
+	$( '#mw-htmlform-details' ).parent().parent().parent().remove();
 	$( 'input[name="wpExpiry-other"]').next().next().remove();
 	$( 'input[name="wpExpiry-other"]').remove();
+	$( 'input[name="wpReason-other"]').remove();
 	$( 'optgroup[label="Motivos predefinidos"]').remove();
-	$( '#mw-input-wpEditingRestriction label[role="radio"]' ).eq( 1 ).remove();
 }
 
 /**
@@ -87,7 +98,7 @@ async function vbr_run() {
 	vbr_eraseProhibitedOptions.apply(
 		undefined,
 		location.hostname !== 'pt.m.wikipedia.org'
-			? [ '#ooui-7 div', '#ooui-2 div' ]
+			? [ '.oo-ui-defaultOverlay > div > div' ]
 			: [ 'select[name="wpExpiry"] option', 'select[name="wpReason"] option' ]
 	);
 
