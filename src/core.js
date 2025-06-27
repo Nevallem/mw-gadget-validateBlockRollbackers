@@ -1,29 +1,29 @@
 /**
  * Validate block rollbackers
  *
- * @desc Prevents that rollbackers in ptwikipedia blocks autoconfirmed users and of exceed the block limit (1 day).
+ * @desc Prevents rollbackers in ptwikipedia blocks autoconfirmed users and of exceed the block limit (1 day).
  * @author [[w:pt:User:!Silent]]
  * @date 15/apr/2012
- * @updated 18/sep/2022
+ * @updated 25/jun/2025
  */
 /* jshint laxbreak: true, esversion: 8 */
-/* global mw, $, URLSearchParams */
+/* global mw, $ */
 
 ( function () {
 'use strict';
 
+// Messages preset
 mw.messages.set( {
 	'vbr-noPermissionAutoconfirmed': 'Como reversor você não tem permissão para bloquear esse usuário, pois ele é um autoconfirmado.',
 	'vbr-noPermissionHimself': 'Como reversor você não tem permissão para bloquear a si mesmo.'
 } );
 
-let $target;
-
 /**
- * Verify if the user is an autoconfirmed
- * @return {jQuery.Deferred}
+ * Verifies if the user is an autoconfirmed
+ * @param {string} target
+ * @return {boolean}
  */
-async function vbr_isAutoconfirmed() {
+async function vbr_isAutoconfirmed( target ) {
 	let requestResponse, requestData;
 
 	requestResponse = await fetch( mw.util.wikiScript( 'api' ) + '?' + new URLSearchParams( {
@@ -32,8 +32,8 @@ async function vbr_isAutoconfirmed() {
 		format: 'json',
 		auprop: 'implicitgroups',
 		aulimit: '1',
-		aufrom: $target.val(),
-		auto: $target.val()
+		aufrom: target,
+		auto: target
 	} ) );
 
 	requestData = await requestResponse.json();
@@ -45,74 +45,50 @@ async function vbr_isAutoconfirmed() {
 
 /**
  * Erase prohibited options to rollbackers
- * @param {string} wpExpiryTarget
- * @param {string} wpReasonTarget
+ * @param {boolean=false} submitDisable
  * @return {undefined}
  */
-function vbr_eraseProhibitedOptions( wpExpiryTarget, wpReasonTarget ) {
+function vbr_eraseProhibitedOptions( submitDisable = false ) {
+	$( '.mw-block-expiry-field__preset-duration li' ).each( function() {
+		if ( $( this ).text().search( /((segundo|minuto|hora)s?|1 dia)/ ) === -1 )
+			$( this ).remove();
+	} );
 
-	if ( !wpReasonTarget ) {
-		$( wpExpiryTarget ).each( function() {
-			if ( $( this ).text().search( /((segundo|minuto|hora)s?|1 dia)/ ) === -1
-				&& $( this ).text().search( /(vandalismo|Propaganda ou \[\[WP:SPAM|spam\]\]|Motivos de bloqueio comuns)/i ) === -1
-				|| $( this ).text().indexOf( 'IP com longo histórico' ) !== -1
-			)
-				$( this ).remove();
-		} );
-	} else {
-		$( wpExpiryTarget ).each( function() {
-			if ( $( this ).text().search( /((segundo|minuto|hora)s?|1 dia)/ ) === -1 )
-				$( this ).remove();
-		} );
-
-		$( wpReasonTarget ).each( function() {
-			if ( $( this ).text().search( /(vandalismo|Propaganda ou \[\[WP:SPAM|spam\]\]|Motivos de bloqueio comuns)/i ) === -1
-				|| $( this ).text().indexOf( 'IP com longo histórico' ) !== -1
-			)
-				$( this ).remove();
-		} );
-	}
-
-	$( '#mw-input-wpEditingRestriction label[role="radio"]' ).eq( 1 ).remove();
-	$( '#mw-htmlform-details' ).parent().parent().parent().remove();
-	$( 'input[name="wpExpiry-other"]').next().next().remove();
-	$( 'input[name="wpExpiry-other"]').remove();
-	$( 'input[name="wpReason-other"]').remove();
-	$( 'optgroup[label="Motivos predefinidos"]').remove();
+	$('div[name="wpReason"]').parent().find('.cdx-menu__group-wrapper').slice(1).remove();
+	$('.mw-block-submit').prop( 'disabled', submitDisable );
+	$('input[value="partial"]').closest('.cdx-radio').remove();
+	$('input[value="custom-duration"]').closest('.cdx-radio').remove();
+	$('input[value="datetime"]').closest('.cdx-radio').remove();
+	$('input[name="wpReason-other"]').closest('.cdx-text-input').remove();
+	$('.mw-block-reason-edit').closest('.cdx-field__help-text').remove();
+	$('input[value="wpCreateAccount"]').closest('.cdx-field--is-fieldset').remove();
 }
 
 /**
  * Executes
+ * @param {string} target
  * @return {undefined}
  */
-async function vbr_run() {
-	if ( $target.val() === mw.config.get( 'wgUserName' ) ) {
-		$( '#mw-content-text' ).html( mw.message( 'vbr-noPermissionHimself' ).plain() );
+async function vbr_run( target ) {
+	if ( await vbr_isAutoconfirmed( target ) )  {
+		vbr_eraseProhibitedOptions( true );
+		mw.notify(
+			mw.message( 'vbr-noPermission' + ( target === mw.config.get( 'wgUserName' ) ? 'Himself' : 'Autoconfirmed' ) ).plain(),
+			{ type: 'error' }
+		);
+
 		return;
 	}
 
-	if ( await vbr_isAutoconfirmed() ) {
-		$( '#mw-content-text' ).html( mw.message( 'vbr-noPermissionAutoconfirmed' ).plain() );
-	}
-
-	vbr_eraseProhibitedOptions.apply(
-		undefined,
-		location.hostname !== 'pt.m.wikipedia.org'
-			? [ '.oo-ui-defaultOverlay > div > div' ]
-			: [ 'select[name="wpExpiry"] option', 'select[name="wpReason"] option' ]
-	);
-
-	$target.blur( async () => {
-		if ( await vbr_isAutoconfirmed() ) {
-			alert( mw.message( 'vbr-noPermission' + ( $target.val() === mw.config.get( 'wgUserName' ) ? 'Himself' : 'Autoconfirmed' ) ).plain() );
-			$target.val( '' ).focus();
-		}
-	} );
+	vbr_eraseProhibitedOptions();
 }
 
-$( function() {
-	$target = $( 'input[name="wpTarget"]' );
-	vbr_run();
+// Attaches in the block form
+mw.hook( 'SpecialBlock.form' ).add( ( open, target ) => {
+	if ( !( open && target ) )
+		return;
+
+	vbr_run( target );
 } );
 
 }() );
